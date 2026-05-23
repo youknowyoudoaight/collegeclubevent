@@ -1,6 +1,7 @@
 import os
 import csv
 import io
+import logging
 from datetime import datetime
 from flask import (Flask, render_template, request, redirect, url_for,
                    flash, g, make_response)
@@ -11,6 +12,10 @@ import mysql.connector
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'supersecretkey_change_in_production')
@@ -27,17 +32,27 @@ login_manager.login_message_category = 'warning'
 
 def get_db():
     if 'db' not in g:
-        # Railway MySQL plugin uses MYSQLHOST / MYSQLUSER / MYSQLPASSWORD / MYSQLDATABASE
-        # Fall back to the generic DB_* names for local dev
-        g.db = mysql.connector.connect(
-            host=os.getenv('MYSQLHOST') or os.getenv('DB_HOST', 'localhost'),
-            port=int(os.getenv('MYSQLPORT') or os.getenv('DB_PORT', 3306)),
-            user=os.getenv('MYSQLUSER') or os.getenv('DB_USER', 'root'),
-            password=os.getenv('MYSQLPASSWORD') or os.getenv('DB_PASSWORD', ''),
-            database=os.getenv('MYSQLDATABASE') or os.getenv('DB_NAME', 'club_events_db'),
-            autocommit=False,
-            connection_timeout=10,
-        )
+        host     = os.getenv('MYSQLHOST')     or os.getenv('DB_HOST', 'localhost')
+        port     = int(os.getenv('MYSQLPORT') or os.getenv('DB_PORT', 3306))
+        user     = os.getenv('MYSQLUSER')     or os.getenv('DB_USER', 'root')
+        password = os.getenv('MYSQLPASSWORD') or os.getenv('DB_PASSWORD', '')
+        database = os.getenv('MYSQLDATABASE') or os.getenv('DB_NAME', 'club_events_db')
+
+        logger.info(f"DB connect → host={host} port={port} user={user} db={database}")
+        try:
+            g.db = mysql.connector.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                database=database,
+                autocommit=False,
+                connection_timeout=10,
+            )
+            logger.info("DB connection successful")
+        except Exception as e:
+            logger.error(f"DB connection FAILED: {e}")
+            raise
     return g.db
 
 
@@ -100,6 +115,56 @@ def inject_globals():
     except Exception:
         pass
     return dict(college_name=college_name, now=datetime.now())
+
+
+# ─────────────────────────────────────────────
+# HEALTH CHECK
+# ─────────────────────────────────────────────
+
+@app.route('/health')
+def health():
+    """Public diagnostic route — shows DB connection status."""
+    status = {}
+    # Check env vars (mask password)
+    status['MYSQLHOST']     = os.getenv('MYSQLHOST', 'NOT SET')
+    status['MYSQLPORT']     = os.getenv('MYSQLPORT', 'NOT SET')
+    status['MYSQLUSER']     = os.getenv('MYSQLUSER', 'NOT SET')
+    status['MYSQLDATABASE'] = os.getenv('MYSQLDATABASE', 'NOT SET')
+    status['MYSQLPASSWORD'] = '***' if os.getenv('MYSQLPASSWORD') else 'NOT SET'
+    status['SECRET_KEY']    = 'SET' if os.getenv('SECRET_KEY') else 'NOT SET (using default)'
+
+    # Try DB connection
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute('SELECT 1')
+        cursor.fetchone()
+        cursor.close()
+        status['db_connection'] = 'OK'
+
+        # Check if tables exist
+        cursor2 = db.cursor()
+        cursor2.execute("SHOW TABLES")
+        tables = [row[0] for row in cursor2.fetchall()]
+        cursor2.close()
+        status['tables'] = tables if tables else 'NO TABLES — run /init-db first'
+    except Exception as e:
+        status['db_connection'] = f'FAILED: {str(e)}'
+
+    rows = ''.join(f'<tr><td><b>{k}</b></td><td>{v}</td></tr>' for k, v in status.items())
+    color = 'green' if status.get('db_connection') == 'OK' else 'red'
+    return f'''
+    <h2 style="font-family:sans-serif;color:{color}">Health Check</h2>
+    <table style="font-family:monospace;border-collapse:collapse">
+    <tr><th style="text-align:left;padding:6px 16px 6px 0">Key</th>
+        <th style="text-align:left">Value</th></tr>
+    {rows}
+    </table>
+    <p style="font-family:sans-serif">
+      If tables are missing → visit
+      <a href="/init-db?token={os.getenv('SECRET_KEY','')}">/init-db?token=YOUR_SECRET_KEY</a>
+    </p>
+    '''
 
 
 # ─────────────────────────────────────────────
