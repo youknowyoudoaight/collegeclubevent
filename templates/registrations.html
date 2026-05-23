@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Registrations{% endblock %}
+{% block page_title %}Registrations{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-clipboard-check-fill me-2 text-purple"></i>Registrations</h5>
+    <button class="btn btn-purple" data-bs-toggle="modal" data-bs-target="#addRegModal">
+      <i class="bi bi-plus-lg me-1"></i>Add Registration
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+      <form method="GET" class="d-flex gap-2 align-items-center">
+        <input type="hidden" name="filter" value="{{ filter_tab }}" />
+        <div class="input-group" style="max-width:320px">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" name="search" value="{{ search }}"
+                 placeholder="Search participant or event..." />
+          {% if search %}
+          <a href="{{ url_for('registrations', filter=filter_tab) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-x"></i>
+          </a>
+          {% endif %}
+        </div>
+        <button type="submit" class="btn btn-purple btn-sm">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link {% if filter_tab == 'all' %}active{% endif %}"
+         href="{{ url_for('registrations', filter='all', search=search) }}">All</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if filter_tab == 'registered' %}active{% endif %}"
+         href="{{ url_for('registrations', filter='registered', search=search) }}">
+        <span class="badge status-registered me-1">●</span>Registered
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if filter_tab == 'attended' %}active{% endif %}"
+         href="{{ url_for('registrations', filter='attended', search=search) }}">
+        <span class="badge status-attended me-1">●</span>Attended
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if filter_tab == 'certificate_issued' %}active{% endif %}"
+         href="{{ url_for('registrations', filter='certificate_issued', search=search) }}">
+        <span class="badge status-certificate_issued me-1">●</span>Certificate Issued
+      </a>
+    </li>
+  </ul>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      {% if registrations %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Participant</th>
+              <th>Event</th>
+              <th>Club</th>
+              <th>Date</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Update Status</th>
+              <th class="text-center">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reg in registrations %}
+            <tr>
+              <td class="text-muted">{{ loop.index }}</td>
+              <td class="fw-semibold">{{ reg.participant_name }}</td>
+              <td>{{ reg.event_name }}</td>
+              <td><span class="badge bg-purple-light text-purple">{{ reg.club_name }}</span></td>
+              <td class="text-muted small">
+                {{ reg.registration_date.strftime('%d %b %Y') if reg.registration_date else '—' }}
+              </td>
+              <td class="text-center">
+                <span class="badge status-{{ reg.status }}">{{ reg.status.replace('_', ' ').title() }}</span>
+              </td>
+              <td class="text-center">
+                <form method="POST" action="{{ url_for('update_registration_status', reg_id=reg.id) }}" class="d-flex gap-1 justify-content-center">
+                  <select name="status" class="form-select form-select-sm" style="width:auto">
+                    <option value="registered" {% if reg.status == 'registered' %}selected{% endif %}>Registered</option>
+                    <option value="attended" {% if reg.status == 'attended' %}selected{% endif %}>Attended</option>
+                    <option value="certificate_issued" {% if reg.status == 'certificate_issued' %}selected{% endif %}>Certificate Issued</option>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-purple">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                </form>
+              </td>
+              <td class="text-center">
+                <form method="POST" action="{{ url_for('delete_registration', reg_id=reg.id) }}"
+                      onsubmit="return confirm('Delete this registration?')">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state py-5">
+        <i class="bi bi-clipboard-x"></i>
+        <p>No registrations found.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Add Registration Modal -->
+<div class="modal fade" id="addRegModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-purple"></i>Add Registration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('add_registration') }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Participant <span class="text-danger">*</span></label>
+            <select class="form-select" name="participant_id" required>
+              <option value="">-- Select Participant --</option>
+              {% for p in participants_list %}
+              <option value="{{ p.id }}">{{ p.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Event <span class="text-danger">*</span></label>
+            <select class="form-select" name="event_id" required>
+              <option value="">-- Select Event --</option>
+              {% for ev in events_list %}
+              <option value="{{ ev.id }}">{{ ev.event_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-purple">
+            <i class="bi bi-plus-lg me-1"></i>Register
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

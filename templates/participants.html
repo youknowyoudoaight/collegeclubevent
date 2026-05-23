@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Participants{% endblock %}
+{% block page_title %}Participants{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-person-lines-fill me-2 text-purple"></i>Participants</h5>
+    <a href="{{ url_for('add_participant') }}" class="btn btn-purple">
+      <i class="bi bi-plus-lg me-1"></i>Add Participant
+    </a>
+  </div>
+
+  <!-- Search -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+      <form method="GET" class="d-flex gap-2 align-items-center">
+        <div class="input-group" style="max-width:320px">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" name="search" value="{{ search }}"
+                 placeholder="Search by name or email..." />
+          {% if search %}
+          <a href="{{ url_for('participants') }}" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>
+          {% endif %}
+        </div>
+        <button type="submit" class="btn btn-purple btn-sm">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      {% if participants %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Branch</th>
+              <th>Year</th>
+              <th class="text-center">Registrations</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in participants %}
+            <tr>
+              <td class="text-muted">{{ loop.index }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="mini-avatar">{{ p.name[0].upper() }}</div>
+                  <span class="fw-semibold">{{ p.name }}</span>
+                </div>
+              </td>
+              <td class="text-muted small">{{ p.email }}</td>
+              <td class="text-muted small">{{ p.phone or '—' }}</td>
+              <td class="text-muted small">{{ p.college_branch or '—' }}</td>
+              <td class="text-muted small">{{ p.year or '—' }}</td>
+              <td class="text-center">
+                <span class="badge bg-purple-light text-purple">{{ p.total_registrations }}</span>
+              </td>
+              <td class="text-center">
+                <a href="{{ url_for('participant_detail', participant_id=p.id) }}" class="btn btn-sm btn-outline-info me-1" title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-danger" title="Delete"
+                        onclick="confirmDelete('{{ url_for('delete_participant', participant_id=p.id) }}', '{{ p.name }}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state py-5">
+        <i class="bi bi-person-x"></i>
+        <p>No participants found. <a href="{{ url_for('add_participant') }}">Add the first participant</a></p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete participant <strong id="deleteItemName"></strong>?
+        All their registrations will also be removed.
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

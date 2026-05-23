@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pb-4">
+
+  <!-- Stat cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="stat-card stat-purple">
+        <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+        <div class="stat-body">
+          <div class="stat-value">{{ total_clubs }}</div>
+          <div class="stat-label">Total Clubs</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card stat-blue">
+        <div class="stat-icon"><i class="bi bi-calendar-event-fill"></i></div>
+        <div class="stat-body">
+          <div class="stat-value">{{ total_events }}</div>
+          <div class="stat-label">Total Events</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="bi bi-person-lines-fill"></i></div>
+        <div class="stat-body">
+          <div class="stat-value">{{ total_participants }}</div>
+          <div class="stat-label">Total Participants</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card stat-orange">
+        <div class="stat-icon"><i class="bi bi-clipboard-check-fill"></i></div>
+        <div class="stat-body">
+          <div class="stat-value">{{ total_registrations }}</div>
+          <div class="stat-label">Total Registrations</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <!-- Upcoming Events -->
+    <div class="col-12 col-xl-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h6 class="mb-0"><i class="bi bi-calendar-check me-2 text-purple"></i>Upcoming Events</h6>
+          <a href="{{ url_for('events', filter='upcoming') }}" class="btn btn-sm btn-outline-purple">View All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if upcoming_events %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Event</th>
+                  <th>Club</th>
+                  <th>Date</th>
+                  <th>Venue</th>
+                  <th>Slots Left</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ev in upcoming_events %}
+                <tr>
+                  <td>
+                    <a href="{{ url_for('event_detail', event_id=ev.id) }}" class="text-decoration-none fw-semibold">
+                      {{ ev.event_name }}
+                    </a>
+                  </td>
+                  <td><span class="badge bg-purple-light text-purple">{{ ev.club_name }}</span></td>
+                  <td><i class="bi bi-calendar3 me-1 text-muted"></i>{{ ev.event_date.strftime('%d %b %Y') if ev.event_date else '' }}</td>
+                  <td class="text-muted small">{{ ev.venue or '—' }}</td>
+                  <td>
+                    {% if ev.slots_left > 0 %}
+                      <span class="badge bg-success">{{ ev.slots_left }} left</span>
+                    {% else %}
+                      <span class="badge bg-danger">Full</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-calendar-x"></i>
+            <p>No upcoming events</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Registrations -->
+    <div class="col-12 col-xl-5">
+      <div class="card shadow-sm h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h6 class="mb-0"><i class="bi bi-clock-history me-2 text-purple"></i>Recent Registrations</h6>
+          <a href="{{ url_for('registrations') }}" class="btn btn-sm btn-outline-purple">View All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_registrations %}
+          <ul class="list-group list-group-flush">
+            {% for reg in recent_registrations %}
+            <li class="list-group-item d-flex align-items-center gap-3 py-3">
+              <div class="mini-avatar">{{ reg.participant_name[0].upper() }}</div>
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-semibold text-truncate">{{ reg.participant_name }}</div>
+                <div class="text-muted small text-truncate">{{ reg.event_name }}</div>
+              </div>
+              <span class="badge status-{{ reg.status }}">{{ reg.status.replace('_', ' ').title() }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-clipboard-x"></i>
+            <p>No registrations yet</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Latest Notices -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h6 class="mb-0"><i class="bi bi-megaphone-fill me-2 text-purple"></i>Latest Notices</h6>
+          <a href="{{ url_for('notices') }}" class="btn btn-sm btn-outline-purple">View All</a>
+        </div>
+        <div class="card-body">
+          {% if latest_notices %}
+          <div class="row g-3">
+            {% for notice in latest_notices %}
+            <div class="col-12 col-md-4">
+              <div class="notice-card">
+                <div class="notice-title">{{ notice.title }}</div>
+                <div class="notice-msg">{{ notice.message }}</div>
+                <div class="notice-date">
+                  <i class="bi bi-clock me-1"></i>
+                  {{ notice.posted_date.strftime('%d %b %Y, %I:%M %p') if notice.posted_date else '' }}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state py-3">
+            <i class="bi bi-megaphone"></i>
+            <p>No notices posted yet</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

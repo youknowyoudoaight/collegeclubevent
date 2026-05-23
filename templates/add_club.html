@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if club else 'Add' }} Club{% endblock %}
+{% block page_title %}{{ 'Edit' if club else 'Add' }} Club{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pb-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <a href="{{ url_for('clubs') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <h5 class="mb-0">
+      <i class="bi bi-people-fill me-2 text-purple"></i>
+      {{ 'Edit Club' if club else 'Add New Club' }}
+    </h5>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form method="POST" id="clubForm">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Club Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="club_name" required
+                     value="{{ club.club_name if club else '' }}" placeholder="e.g. Tech Club" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Description</label>
+              <textarea class="form-control" name="description" rows="3"
+                        placeholder="Brief description of the club">{{ club.description if club else '' }}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Contact Person</label>
+              <input type="text" class="form-control" name="contact_person"
+                     value="{{ club.contact_person if club else '' }}" placeholder="e.g. Dr. Smith" />
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" class="form-control" name="email"
+                     value="{{ club.email if club else '' }}" placeholder="club@college.edu" />
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-purple" id="submitBtn">
+                <span class="btn-text">
+                  <i class="bi bi-{{ 'check-lg' if club else 'plus-lg' }} me-1"></i>
+                  {{ 'Update Club' if club else 'Add Club' }}
+                </span>
+                <span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span>
+              </button>
+              <a href="{{ url_for('clubs') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

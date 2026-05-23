@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Add Participant{% endblock %}
+{% block page_title %}Add Participant{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pb-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <a href="{{ url_for('participants') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <h5 class="mb-0"><i class="bi bi-person-plus-fill me-2 text-purple"></i>Add New Participant</h5>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form method="POST" id="participantForm">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="name" required placeholder="e.g. Alice Johnson" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" name="email" required placeholder="alice@student.edu" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Phone</label>
+                <input type="text" class="form-control" name="phone" placeholder="9876543210" />
+              </div>
+              <div class="col-md-8">
+                <label class="form-label fw-semibold">Branch / Department</label>
+                <input type="text" class="form-control" name="college_branch" placeholder="e.g. Computer Science" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Year</label>
+                <select class="form-select" name="year">
+                  <option value="">-- Select --</option>
+                  <option>1st Year</option>
+                  <option>2nd Year</option>
+                  <option>3rd Year</option>
+                  <option>4th Year</option>
+                  <option>PG 1st Year</option>
+                  <option>PG 2nd Year</option>
+                </select>
+              </div>
+            </div>
+            <div class="d-flex gap-2 mt-4">
+              <button type="submit" class="btn btn-purple" id="submitBtn">
+                <span class="btn-text"><i class="bi bi-plus-lg me-1"></i>Add Participant</span>
+                <span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span>
+              </button>
+              <a href="{{ url_for('participants') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

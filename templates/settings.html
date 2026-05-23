@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pb-4">
+  <h5 class="mb-4"><i class="bi bi-gear-fill me-2 text-purple"></i>Settings</h5>
+
+  <div class="row g-4">
+    <!-- College Name -->
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-building me-2 text-purple"></i>College Information</h6>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <input type="hidden" name="action" value="update_college" />
+            <div class="mb-3">
+              <label class="form-label fw-semibold">College Name</label>
+              <input type="text" class="form-control" name="college_name"
+                     value="{{ college_name }}" placeholder="Enter college name" />
+              <div class="form-text">This name appears in the page header and title.</div>
+            </div>
+            <button type="submit" class="btn btn-purple" id="collegeBtn">
+              <span class="btn-text"><i class="bi bi-check-lg me-1"></i>Save Changes</span>
+              <span class="spinner-border spinner-border-sm d-none" id="collegeSpinner"></span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-shield-lock me-2 text-purple"></i>Change Password</h6>
+        </div>
+        <div class="card-body">
+          <form method="POST" id="pwForm">
+            <input type="hidden" name="action" value="change_password" />
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Current Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" name="current_password"
+                       id="currentPw" required placeholder="Enter current password" />
+                <button class="btn btn-outline-secondary" type="button"
+                        onclick="togglePw('currentPw', 'eye1')">
+                  <i class="bi bi-eye" id="eye1"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">New Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" name="new_password"
+                       id="newPw" required placeholder="Min. 6 characters" minlength="6" />
+                <button class="btn btn-outline-secondary" type="button"
+                        onclick="togglePw('newPw', 'eye2')">
+                  <i class="bi bi-eye" id="eye2"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Confirm New Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" name="confirm_password"
+                       id="confirmPw" required placeholder="Repeat new password" />
+                <button class="btn btn-outline-secondary" type="button"
+                        onclick="togglePw('confirmPw', 'eye3')">
+                  <i class="bi bi-eye" id="eye3"></i>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-purple" id="pwBtn">
+              <span class="btn-text"><i class="bi bi-lock me-1"></i>Change Password</span>
+              <span class="spinner-border spinner-border-sm d-none" id="pwSpinner"></span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Info -->
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-person-circle me-2 text-purple"></i>Admin Account</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="club-avatar-lg">{{ current_user.name[0].upper() }}</div>
+            <div>
+              <div class="fw-bold fs-5">{{ current_user.name }}</div>
+              <div class="text-muted">{{ current_user.email }}</div>
+              <span class="badge bg-purple-light text-purple mt-1">Administrator</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function togglePw(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'bi bi-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'bi bi-eye';
+    }
+  }
+</script>
+{% endblock %}

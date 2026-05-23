@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+{% block page_title %}Events{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 pb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-calendar-event-fill me-2 text-purple"></i>Events</h5>
+    <a href="{{ url_for('add_event') }}" class="btn btn-purple">
+      <i class="bi bi-plus-lg me-1"></i>Add Event
+    </a>
+  </div>
+
+  <!-- Search + Filter -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+      <form method="GET" class="d-flex flex-wrap gap-2 align-items-center">
+        <input type="hidden" name="filter" value="{{ filter_tab }}" id="filterInput" />
+        <div class="input-group" style="max-width:320px">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" name="search" value="{{ search }}"
+                 placeholder="Search by event or club name..." />
+          {% if search %}
+          <a href="{{ url_for('events', filter=filter_tab) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-x"></i>
+          </a>
+          {% endif %}
+        </div>
+        <button type="submit" class="btn btn-purple btn-sm">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link {% if filter_tab == 'all' %}active{% endif %}"
+         href="{{ url_for('events', filter='all', search=search) }}">
+        <i class="bi bi-grid me-1"></i>All
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if filter_tab == 'upcoming' %}active{% endif %}"
+         href="{{ url_for('events', filter='upcoming', search=search) }}">
+        <i class="bi bi-calendar-check me-1"></i>Upcoming
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if filter_tab == 'past' %}active{% endif %}"
+         href="{{ url_for('events', filter='past', search=search) }}">
+        <i class="bi bi-calendar-x me-1"></i>Past
+      </a>
+    </li>
+  </ul>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      {% if events %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Event Name</th>
+              <th>Club</th>
+              <th>Date</th>
+              <th>Venue</th>
+              <th class="text-center">Max</th>
+              <th class="text-center">Registered</th>
+              <th class="text-center">Slots Left</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ev in events %}
+            <tr>
+              <td>
+                <a href="{{ url_for('event_detail', event_id=ev.id) }}" class="text-decoration-none fw-semibold">
+                  {{ ev.event_name }}
+                </a>
+              </td>
+              <td><span class="badge bg-purple-light text-purple">{{ ev.club_name }}</span></td>
+              <td>
+                {% if ev.event_date %}
+                  {% set today = now.date() %}
+                  {% if ev.event_date >= today %}
+                    <span class="badge bg-success-subtle text-success me-1">Upcoming</span>
+                  {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary me-1">Past</span>
+                  {% endif %}
+                  {{ ev.event_date.strftime('%d %b %Y') }}
+                {% endif %}
+              </td>
+              <td class="text-muted small">{{ ev.venue or '—' }}</td>
+              <td class="text-center">{{ ev.max_participants }}</td>
+              <td class="text-center">{{ ev.registered_count }}</td>
+              <td class="text-center">
+                {% if ev.slots_left > 0 %}
+                  <span class="badge bg-success">{{ ev.slots_left }}</span>
+                {% else %}
+                  <span class="badge bg-danger">Full</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <a href="{{ url_for('event_detail', event_id=ev.id) }}" class="btn btn-sm btn-outline-info me-1" title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{{ url_for('edit_event', event_id=ev.id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-danger" title="Delete"
+                        onclick="confirmDelete('{{ url_for('delete_event', event_id=ev.id) }}', '{{ ev.event_name }}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state py-5">
+        <i class="bi bi-calendar-x"></i>
+        <p>No events found. <a href="{{ url_for('add_event') }}">Add the first event</a></p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete <strong id="deleteItemName"></strong>?
+        All registrations for this event will also be deleted.
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
