@@ -32,11 +32,28 @@ login_manager.login_message_category = 'warning'
 
 def get_db():
     if 'db' not in g:
-        host     = os.getenv('MYSQLHOST')     or os.getenv('DB_HOST', 'localhost')
-        port     = int(os.getenv('MYSQLPORT') or os.getenv('DB_PORT', 3306))
-        user     = os.getenv('MYSQLUSER')     or os.getenv('DB_USER', 'root')
-        password = os.getenv('MYSQLPASSWORD') or os.getenv('DB_PASSWORD', '')
-        database = os.getenv('MYSQLDATABASE') or os.getenv('DB_NAME', 'club_events_db')
+        # Read DB_* first (set in Railway web service variables),
+        # then fall back to MYSQL* variants
+        host     = (os.getenv('DB_HOST')
+                    or os.getenv('MYSQLHOST')
+                    or os.getenv('MYSQL_HOST')
+                    or 'localhost')
+        port     = int(os.getenv('DB_PORT')
+                    or os.getenv('MYSQLPORT')
+                    or os.getenv('MYSQL_PORT')
+                    or 3306)
+        user     = (os.getenv('DB_USER')
+                    or os.getenv('MYSQLUSER')
+                    or os.getenv('MYSQL_USER')
+                    or 'root')
+        password = (os.getenv('DB_PASSWORD')
+                    or os.getenv('MYSQLPASSWORD')
+                    or os.getenv('MYSQL_PASSWORD')
+                    or '')
+        database = (os.getenv('DB_NAME')
+                    or os.getenv('MYSQLDATABASE')
+                    or os.getenv('MYSQL_DATABASE')
+                    or 'railway')
 
         logger.info(f"DB connect → host={host} port={port} user={user} db={database}")
         try:
@@ -125,15 +142,13 @@ def inject_globals():
 def health():
     """Public diagnostic route — shows DB connection status."""
     status = {}
-    # Check env vars (mask password)
-    status['MYSQLHOST']     = os.getenv('MYSQLHOST', 'NOT SET')
-    status['MYSQLPORT']     = os.getenv('MYSQLPORT', 'NOT SET')
-    status['MYSQLUSER']     = os.getenv('MYSQLUSER', 'NOT SET')
-    status['MYSQLDATABASE'] = os.getenv('MYSQLDATABASE', 'NOT SET')
-    status['MYSQLPASSWORD'] = '***' if os.getenv('MYSQLPASSWORD') else 'NOT SET'
+    status['DB_HOST']       = os.getenv('DB_HOST', 'NOT SET')
+    status['DB_PORT']       = os.getenv('DB_PORT', 'NOT SET')
+    status['DB_USER']       = os.getenv('DB_USER', 'NOT SET')
+    status['DB_NAME']       = os.getenv('DB_NAME', 'NOT SET')
+    status['DB_PASSWORD']   = '***' if os.getenv('DB_PASSWORD') else 'NOT SET'
     status['SECRET_KEY']    = 'SET' if os.getenv('SECRET_KEY') else 'NOT SET (using default)'
 
-    # Try DB connection
     try:
         db = get_db()
         cursor = db.cursor()
@@ -142,7 +157,6 @@ def health():
         cursor.close()
         status['db_connection'] = 'OK'
 
-        # Check if tables exist
         cursor2 = db.cursor()
         cursor2.execute("SHOW TABLES")
         tables = [row[0] for row in cursor2.fetchall()]
